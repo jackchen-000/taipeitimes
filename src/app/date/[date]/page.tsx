@@ -1,22 +1,25 @@
-import { fetchAllSectionsNewsForDate, todayInTaipei } from "@/lib/taipeiTimes";
+import { notFound } from "next/navigation";
+import { fetchAllSectionsNewsForDate, parseDateParam } from "@/lib/taipeiTimes";
 import NewsBoard from "@/components/NewsBoard";
 import DatePicker from "@/components/DatePicker";
 
-export const revalidate = 300;
-
-function todayLabel() {
+function dateLabel(isoDate: string) {
   return new Intl.DateTimeFormat("zh-TW", {
     timeZone: "Asia/Taipei",
     year: "numeric",
     month: "long",
     day: "numeric",
     weekday: "long",
-  }).format(new Date());
+  }).format(new Date(`${isoDate}T12:00:00+08:00`));
 }
 
-export default async function Home() {
-  const today = todayInTaipei();
-  const sections = await fetchAllSectionsNewsForDate(today);
+export default async function DatePage(props: PageProps<"/date/[date]">) {
+  const { date: rawDate } = await props.params;
+  const date = parseDateParam(rawDate);
+  if (!date) notFound();
+
+  const isoDate = date.replace(/\//g, "-");
+  const sections = await fetchAllSectionsNewsForDate(date);
   const totalCount = sections.reduce((sum, s) => sum + s.items.length, 0);
 
   return (
@@ -25,10 +28,10 @@ export default async function Home() {
         <div className="mx-auto flex max-w-5xl items-start justify-between gap-4 px-6 py-8">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Taipei Times 今日新聞總覽
+              Taipei Times 新聞總覽
             </h1>
             <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-              {todayLabel()} · 共 {totalCount} 則今日新聞 · 資料來源{" "}
+              {dateLabel(isoDate)} · 共 {totalCount} 則新聞 · 資料來源{" "}
               <a
                 href="https://www.taipeitimes.com/"
                 target="_blank"
@@ -37,9 +40,16 @@ export default async function Home() {
               >
                 taipeitimes.com
               </a>
+              {" · "}
+              <a
+                href="/"
+                className="underline decoration-dotted underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-200"
+              >
+                回今日新聞
+              </a>
             </p>
           </div>
-          <DatePicker defaultValue={today.replace(/\//g, "-")} />
+          <DatePicker defaultValue={isoDate} />
         </div>
       </header>
 
