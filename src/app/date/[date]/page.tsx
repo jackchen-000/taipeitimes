@@ -25,9 +25,9 @@ export default async function DatePage(props: PageProps<"/date/[date]">) {
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-black">
       <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mx-auto flex max-w-5xl items-start justify-between gap-4 px-6 py-8">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl dark:text-zinc-50">
               Taipei Times 新聞總覽
             </h1>
             <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
@@ -53,7 +53,7 @@ export default async function DatePage(props: PageProps<"/date/[date]">) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-10">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         <NewsBoard sections={sections} />
       </main>
     </div>

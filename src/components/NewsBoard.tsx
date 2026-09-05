@@ -7,11 +7,11 @@ type SectionResult = {
 
 export default function NewsBoard({ sections }: { sections: SectionResult[] }) {
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
       {sections.map(({ section, items }) => (
         <section
           key={section.slug}
-          className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
+          className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-950"
         >
           <div className="mb-4 flex items-baseline justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
