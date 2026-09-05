@@ -14,7 +14,7 @@ export default function NewsBoard({ sections }: { sections: SectionResult[] }) {
           className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-950"
         >
           <div className="mb-4 flex items-baseline justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
               {section.name}
             </h2>
             <span className="text-xs text-zinc-400">{items.length} 則</span>
