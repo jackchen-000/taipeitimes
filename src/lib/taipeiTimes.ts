@@ -267,9 +267,23 @@ export async function fetchAllSectionsNewsForDate(date: string) {
     bySlug.set(info.sectionSlug, list);
   }
 
-  return SECTIONS.map((section) => {
+  const results = SECTIONS.map((section) => {
     const items = (bySlug.get(section.slug) ?? []).slice();
-    items.sort((a, b) => Number(a.id) - Number(b.id));
+    items.sort((a, b) => comparePage(a.page, b.page) || Number(a.id) - Number(b.id));
     return { section, items };
   });
+
+  // Sections are ordered by their lowest print page number that day (the
+  // section covering the earliest page comes first), preserving the
+  // original SECTIONS order for ties or sections with no page info.
+  results.sort((a, b) => comparePage(a.items[0]?.page ?? null, b.items[0]?.page ?? null));
+
+  return results;
+}
+
+function comparePage(a: number | null, b: number | null): number {
+  if (a === null && b === null) return 0;
+  if (a === null) return 1;
+  if (b === null) return -1;
+  return a - b;
 }

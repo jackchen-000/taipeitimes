@@ -25,7 +25,7 @@ export default function NewsBoard({ sections }: { sections: SectionResult[] }) {
           ) : (
             <ol className="space-y-2">
               {items.map((item, index) => (
-                <li key={item.id} className="flex gap-2 text-sm">
+                <li key={item.id} className="flex gap-2 text-lg">
                   <span className="mt-0.5 shrink-0 text-zinc-400">
                     {index + 1}.
                   </span>
