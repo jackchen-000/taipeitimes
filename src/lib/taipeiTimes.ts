@@ -277,11 +277,12 @@ async function findAnchor(revalidate: number): Promise<{ id: number; date: strin
 export async function fetchAllSectionsNewsForDate(date: string) {
   const isToday = date === todayInTaipei();
   const revalidate = isToday ? 300 : 86400;
-  // Today's articles publish incrementally, so a not-yet-published ID can
-  // look like a gap even though more news for today follows it. Tolerate a
-  // longer run of misses for today; for past dates a run of misses reliably
-  // means we've reached the boundary of that day's articles.
-  const maxMisses = isToday ? 15 : 3;
+  // A real day boundary is detected the moment we see a *different* date,
+  // which stops the scan immediately regardless of this value — misses only
+  // count actual fetch failures (id doesn't exist yet, or a transient/origin
+  // hiccup). Today's articles also publish incrementally, so tolerate more
+  // of those for today; past dates get a still-generous but smaller budget.
+  const maxMisses = isToday ? 15 : 10;
   const empty = SECTIONS.map((section) => ({ section, items: [] as NewsItem[] }));
 
   const anchor = await findAnchor(revalidate);
