@@ -97,16 +97,25 @@ async function fetchArticleById(
         next: { revalidate },
       }
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`[taipeiTimes] id=${id} fetch not ok: status=${res.status} url=${res.url}`);
+      return null;
+    }
 
     const m = res.url.match(CANONICAL_RE);
-    if (!m) return null;
+    if (!m) {
+      console.error(`[taipeiTimes] id=${id} no canonical match: finalUrl=${res.url}`);
+      return null;
+    }
     const [, sectionSlug, year, month, day, realId] = m;
 
     const html = await res.text();
     const $ = cheerio.load(html);
     const title = $("div.archives h1").first().text().trim();
-    if (!title) return null;
+    if (!title) {
+      console.error(`[taipeiTimes] id=${id} no title found: finalUrl=${res.url} htmlLength=${html.length}`);
+      return null;
+    }
 
     const stamp = $("div.where").next("h6").text();
     const pageMatch = stamp.match(PAGE_STAMP_RE);
@@ -119,7 +128,8 @@ async function fetchArticleById(
       sectionSlug,
       page: pageMatch ? Number(pageMatch[1]) : null,
     };
-  } catch {
+  } catch (err) {
+    console.error(`[taipeiTimes] id=${id} fetch threw:`, err);
     return null;
   }
 }
