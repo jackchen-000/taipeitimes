@@ -3,6 +3,9 @@ import { fetchAllSectionsNewsForDate, parseDateParam } from "@/lib/taipeiTimes";
 import NewsBoard from "@/components/NewsBoard";
 import DatePicker from "@/components/DatePicker";
 
+// See src/app/page.tsx for why this is force-dynamic rather than ISR.
+export const dynamic = "force-dynamic";
+
 function dateLabel(isoDate: string) {
   return new Intl.DateTimeFormat("zh-TW", {
     timeZone: "Asia/Taipei",

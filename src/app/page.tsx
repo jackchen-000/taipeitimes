@@ -2,7 +2,12 @@ import { fetchAllSectionsNewsForDate, todayInTaipei } from "@/lib/taipeiTimes";
 import NewsBoard from "@/components/NewsBoard";
 import DatePicker from "@/components/DatePicker";
 
-export const revalidate = 300;
+// Today's news is scraped live and changes throughout the day; render on
+// every request instead of relying on ISR (which, if a background
+// regeneration ever fails or times out, keeps serving the same stale
+// snapshot indefinitely). Each underlying fetch() still has its own
+// short-lived cache, so repeat requests stay fast.
+export const dynamic = "force-dynamic";
 
 function todayLabel() {
   return new Intl.DateTimeFormat("zh-TW", {
