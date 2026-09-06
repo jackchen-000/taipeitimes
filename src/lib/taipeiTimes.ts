@@ -172,17 +172,17 @@ async function scanDirection(
   startId: number,
   direction: 1 | -1,
   date: string,
-  revalidate: number
+  revalidate: number,
+  maxMisses: number
 ): Promise<ArticleInfo[]> {
   const BATCH_SIZE = 10;
-  const MAX_MISSES = 3;
   const MAX_BATCHES = 20;
 
   const results: ArticleInfo[] = [];
   let misses = 0;
   let cursor = startId;
 
-  for (let batch = 0; batch < MAX_BATCHES && misses < MAX_MISSES; batch++) {
+  for (let batch = 0; batch < MAX_BATCHES && misses < maxMisses; batch++) {
     const ids = Array.from({ length: BATCH_SIZE }, (_, i) => cursor + direction * (i + 1));
     const infos = await Promise.all(ids.map((id) => fetchArticleById(id, revalidate)));
 
@@ -190,7 +190,7 @@ async function scanDirection(
     for (const info of infos) {
       if (!info) {
         misses++;
-        if (misses >= MAX_MISSES) {
+        if (misses >= maxMisses) {
           stop = true;
           break;
         }
@@ -239,7 +239,13 @@ async function findAnchor(revalidate: number): Promise<{ id: number; date: strin
 }
 
 export async function fetchAllSectionsNewsForDate(date: string) {
-  const revalidate = date === todayInTaipei() ? 300 : 86400;
+  const isToday = date === todayInTaipei();
+  const revalidate = isToday ? 300 : 86400;
+  // Today's articles publish incrementally, so a not-yet-published ID can
+  // look like a gap even though more news for today follows it. Tolerate a
+  // longer run of misses for today; for past dates a run of misses reliably
+  // means we've reached the boundary of that day's articles.
+  const maxMisses = isToday ? 15 : 3;
   const empty = SECTIONS.map((section) => ({ section, items: [] as NewsItem[] }));
 
   const anchor = await findAnchor(revalidate);
@@ -249,8 +255,8 @@ export async function fetchAllSectionsNewsForDate(date: string) {
   if (!witness) return empty;
 
   const [before, after] = await Promise.all([
-    scanDirection(Number(witness.id), -1, date, revalidate),
-    scanDirection(Number(witness.id), 1, date, revalidate),
+    scanDirection(Number(witness.id), -1, date, revalidate, maxMisses),
+    scanDirection(Number(witness.id), 1, date, revalidate, maxMisses),
   ]);
 
   const all = [...before, witness, ...after];
