@@ -85,21 +85,33 @@ type ArticleInfo = {
 // redirects to the canonical /News/{section}/archives/{y}/{m}/{d}/{id} URL
 // regardless of what section/date is in the probe URL. That lets us look up
 // any article (and discover its real section + date) from just its ID.
-async function fetchArticleById(
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchArticleByIdOnce(
   id: number,
   revalidate: number
-): Promise<ArticleInfo | null> {
+): Promise<ArticleInfo | null | "retry"> {
   try {
     const res = await fetch(
       `${BASE_URL}/News/front/archives/2000/01/01/${id}`,
       {
-        headers: { "User-Agent": USER_AGENT },
+        headers: {
+          "User-Agent": USER_AGENT,
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9,zh-TW;q=0.8",
+        },
         next: { revalidate },
       }
     );
     if (!res.ok) {
       console.error(`[taipeiTimes] id=${id} fetch not ok: status=${res.status} url=${res.url}`);
-      return null;
+      // A 404/403 here can be the origin's bot-mitigation misfiring on a
+      // known-real ID rather than the article genuinely not existing, so
+      // it's worth a couple of retries before treating it as a real gap.
+      return res.status === 404 || res.status === 403 ? "retry" : null;
     }
 
     const m = res.url.match(CANONICAL_RE);
@@ -114,7 +126,7 @@ async function fetchArticleById(
     const title = $("div.archives h1").first().text().trim();
     if (!title) {
       console.error(`[taipeiTimes] id=${id} no title found: finalUrl=${res.url} htmlLength=${html.length}`);
-      return null;
+      return "retry";
     }
 
     const stamp = $("div.where").next("h6").text();
@@ -130,8 +142,22 @@ async function fetchArticleById(
     };
   } catch (err) {
     console.error(`[taipeiTimes] id=${id} fetch threw:`, err);
-    return null;
+    return "retry";
   }
+}
+
+async function fetchArticleById(
+  id: number,
+  revalidate: number
+): Promise<ArticleInfo | null> {
+  const RETRY_DELAYS_MS = [250, 750];
+  for (const delay of RETRY_DELAYS_MS) {
+    const result = await fetchArticleByIdOnce(id, revalidate);
+    if (result !== "retry") return result;
+    await sleep(delay);
+  }
+  const finalResult = await fetchArticleByIdOnce(id, revalidate);
+  return finalResult === "retry" ? null : finalResult;
 }
 
 // Finds one article ID published on `date` by interpolating from a known
